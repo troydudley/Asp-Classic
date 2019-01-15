@@ -1,0 +1,162 @@
+function ReplaceNullWithEmptyString(value)
+
+	dim val
+	val = ""
+
+	if NOT ISNULL(value) then
+		val = value
+	end if
+
+	ReplaceNullWithEmptyString = val
+
+end function
+
+function GetValueByKey(key, col, defaultValue)
+
+	dim val
+	val = ""
+
+	for each item in col
+	
+		if LCASE(item) = LCASE(key) then
+			val =  Replace(ReplaceNullWithEmptyString(col(key)),"'","''")
+		
+			if ISNULL(val) OR LEN(val) = 0 then
+				val = defaultValue
+			end if		
+		end if	
+	next			
+
+	GetValueByKey = val
+
+end function
+
+
+function IIf(test,t,f)
+
+	if test then
+	
+		IIf = t
+	else
+		IIf = f
+	end if
+
+end function
+
+function FieldExistsInRS(ByRef rs, ByVal fieldname)
+
+	dim fld
+	dim exists : exists = false
+			
+	fieldName = LCASE(fieldName)
+	'rs.open
+	if ISOBJECT(rs) then
+	
+		Set objFields = rs.Clone'.Fields
+		
+		For Idx = 0 To rs.Fields.Count -1
+		   if LCASE(objFields(Idx).Name) = LCASE(fieldname) then
+				FieldExistsInRs = true				
+			end if 
+		Next
+	
+	end if	
+	
+	FieldExistsInRs = False
+	'FieldExistsInRs = exists
+	
+end function
+
+
+function GetReadOnlyRS(mySQL)
+
+	'Set some constants
+	Const adOpenStatic = 3    
+	Const adUseClient = 3
+	Const adLockBatchOptimistic = 4 
+
+	'Declare our variables
+	Dim oConn	
+	Dim oRS
+
+	'Open a connection
+	strConn = "DRIVER={SQL Server}; Server=" & scSQLServer & "; Database=" & scDataBase & "; UID=" & scSQLUser & "; PWD=" & scSQLpwd '
+	
+	Set oConn = Server.CreateObject("ADODB.Connection")
+	oConn.Open strConn	
+
+	'Create the Recordset object
+	Set oRS = Server.CreateObject("ADODB.Recordset")
+	oRS.CursorLocation = adUseClient
+
+	'Populate the Recordset object with a SQL query
+	oRS.Open mySQL, oConn, adOpenStatic, adLockBatchOptimistic
+
+	'Disconnect the Recordset
+	Set oRS.ActiveConnection = Nothing
+
+	'Return the Recordset
+	Set GetReadOnlyRS = oRS
+
+end function
+
+function GetRSArray(mySQL)
+
+	'this function returns a disconnected RS
+	
+	Dim oConn, oRS, strConn, arrRows
+	
+	'Open a connection
+	Set oConn = Server.CreateObject("ADODB.Connection")
+	
+	strConn = "DRIVER={SQL Server}; Server=" & scSQLServer & "; Database=" & scDataBase & "; UID=" & scSQLUser & "; PWD=" & scSQLpwd '
+	oConn.Open strConn	
+	
+	'Create the Recordset Object
+	Set oRS = oConn.Execute(mySQL)
+	
+	
+	if NOT oRS.eof then
+		arrRows = oRS.GetRows()
+	else
+		arrRows = ""
+	end if
+			
+	'Clean up...
+	oConn.Close
+	Set oConn = Nothing		
+	Set oRS = Nothing	
+	
+	GetRSArray = arrRows
+	
+end function
+
+
+function CopyRecordsetStructure(ByRef rs)
+
+	Dim rsTemp
+	Set rsTemp = CreateObject("ADODB.Recordset")
+	
+	Set objFields = rs.Fields
+	intFieldCount = objFields.Count - 1
+	
+	For Idx = 0 To intFieldCount
+	  rsTemp.Fields.Append objFields(Idx).Name, objFields(Idx).Type, objFields(Idx).DefinedSize
+	Next
+	
+	CopyRecordsetStructure = rsTemp
+	
+End Function
+
+
+Function CreateGUID(tmpLength)
+  Randomize Timer
+  Dim tmpCounter,tmpGUID
+  Const strValid = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  For tmpCounter = 1 To tmpLength
+    tmpGUID = tmpGUID & Mid(strValid, Int(Rnd(1) * Len(strValid)) + 1, 1)
+  Next
+  CreateGUID = tmpGUID
+End Function
+
+
