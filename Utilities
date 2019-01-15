@@ -148,6 +148,19 @@ function CopyRecordsetStructure(ByRef rs)
 	
 End Function
 
+Function IsNullArray(arr)
+
+	ON ERROR RESUME NEXT
+	Dim is_null : is_null = UBound(arr)
+	if Err.Number = 0 then
+		is_null = false
+	else
+		is_null = true
+	end if
+	
+	IsNullArray = is_null
+
+End Function
 
 Function CreateGUID(tmpLength)
   Randomize Timer
